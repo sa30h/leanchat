@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>LeanChat | {% block title %}{% endblock title %}</title>
+
+	<link rel="stylesheet"  href="{% static "leanchat/css/all.css" %}">
+	<link rel="stylesheet"  href="{% static "leanchat/css/bootstrap.css" %}">
+</head>
+<body>
+	<style >
+		.main{
+			min-height: 100vh;
+			height: 100%;
+		}
+	</style>
+
+<header>
+
+</header>
+
+
+<content >
+	
+	<div class="main">
+ 		{% block content %}    
+	{% endblock content %}
+	</div>
+	
+	{% block msg %}
+	{% endblock msg %}
+	
+
+</content>
+
+
+
+
+<script src="{% static 'leanchat/js/jquery.js'%}"></script>
+
+
+<script src="{% static 'leanchat/js/popper.js'%}"></script>
+<script src="{% static 'leanchat/js/all.js'%}"></script>
+<script src="{% static 'leanchat/js/bootstrap.js'%}"></script>
+
+<script src="{% static 'leanchat/js/main.js' %}"></script>
+
+</body>
+</html>
