@@ -5,10 +5,10 @@ var mapPeers={};
 var labelUsername=document.querySelector('#label-username')
 var usernameInput=document.querySelector('#username')
 var btnJoin=document.querySelector('#btn-join')
-
+var candidates={};
 var username;
 var webSocket;
-
+const senders=[];
 function webSocketOnMessage(event){
     var parsedData=JSON.parse(event.data)
     var peerUsername=parsedData['peer'];
@@ -54,6 +54,9 @@ btnJoin.addEventListener('click',()=>{
     btnJoin.style.visibility='hidden';
     labelUsername.innerHTML=username;
 
+    const roomNamestr = JSON.parse(document.getElementById('room-name').textContent);
+
+
     var loc=window.location;
     var wsStart='ws://';
 
@@ -61,7 +64,12 @@ btnJoin.addEventListener('click',()=>{
         wsStart='wss://';
     }
 
-    var endpoint=wsStart+loc.host+loc.pathname;
+    var endpoint=wsStart+loc.host+'/ws/chat/'+roomNamestr+'/';
+    // 'ws://'
+    // + window.location.host
+    // + '/ws/chat/'
+    // + roomName
+    // + '/'
     console.log('endpoint',endpoint);
 
     webSocket=new WebSocket(endpoint);
@@ -144,13 +152,13 @@ var messageList=document.querySelector('#message-list');
 function sendMsgonClick(){
 
     var message=messageInput.value;
-    var li=document.createElement('li');
-    li.appendChild(document.createTextNode('Me:'+message));
-    messageList.appendChild(li)
-
+    // var li=document.createElement('li');
+    // li.appendChild(document.createTextNode('Me:'+message));
+    // messageList.appendChild(li)
+    document.querySelector('#chat-log').value += ('You:'+'\n'+message + '\n');
     var dataChannels=getDataChannels();
 
-    message=username+':'+message;
+    message=username+'\n'+':'+message;
 
     for(index in dataChannels){
         dataChannels[index].send(message);
@@ -236,11 +244,13 @@ function createAnswerer(offer,peerUsername,receiver_channel_name){
         peer.dc=e.channel;
         peer.dc.addEventListener('open',()=>{
             console.log('dc connecton open')
+            
         })
     
         peer.dc.addEventListener('message',dcOnMessage)
 
         mapPeers[peerUsername]=[peer,peer.dc];
+     
     })
 
 
@@ -284,40 +294,60 @@ function createAnswerer(offer,peerUsername,receiver_channel_name){
 
 function addLocalTracks(peer){
     localStream.getTracks().forEach(track=>{
+        // senders.push(peer.addTrack(track, userMediaStream))
         peer.addTrack(track,localStream);
     })
     return;
+
+ 
 }
 
-
+document.querySelector('#msg').focus();
+        document.querySelector('#msg').onkeyup = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.querySelector('#btn-send-msg').click();
+            }
+        };
 
 function dcOnMessage(event){
 
+    // const data = JSON.parse(e.data);
+    // document.querySelector('#chat-log').value += (data.message + '\n');
     var message=event.data;
-    var li=document.createElement('li');
-    li.appendChild(document.createTextNode(message));
-    messageList.appendChild(li);
+
+    // var li=document.createElement('li');
+    // li.appendChild(document.createTextNode(message));
+    // messageList.appendChild(li);
+
+    // const data = JSON.parse(event.data);
+    document.querySelector('#chat-log').value += (message + '\n');
 }
 
 function createVideo(peerUsername){
 
     var videoContainer=document.querySelector('#video-container');
     var remoteVideo=document.createElement('video');
+    var userlabel=document.createElement('h5');
+  
     remoteVideo.id=peerUsername+'-video';
     remoteVideo.autoplay=true;
     remoteVideo.playsInline=true;
     var videoWrapper=document.createElement('div');
-    videoWrapper.className='card';
+    videoWrapper.className='card-body ';
+    userlabel.className='card-title'
+    userlabel.innerHTML=peerUsername;
 
     videoContainer.appendChild(videoWrapper);
 
     videoWrapper.appendChild(remoteVideo);
+    videoWrapper.appendChild(userlabel);
+
     return remoteVideo;
 }
 
 function setOnTrack(peer,remoteVideo){
     var remoteStream=new MediaStream();
-
+   
     remoteVideo.srcObject=remoteStream;
     peer.addEventListener('track',async(event)=>{
         remoteStream.addTrack(event.track,remoteStream);
@@ -339,3 +369,60 @@ function getDataChannels(){
     }
     return dataChannels;
 }
+
+function handleSuccess(stream) {
+    btnScreenshare.disabled = true;
+    // const video = document.querySelector('#local-video');
+
+    // video.srcObject = stream;
+    // var remoteVideo=createVideo(peerUsername);
+    // setOnTrack(peer,remoteVideo);
+  
+    // demonstrates how to detect that the user has stopped
+    // sharing the screen via the browser UI.
+    stream.getVideoTracks()[0].addEventListener('ended', () => {
+      errorMsg('The user has ended sharing the screen');
+      btnScreenshare.disabled = false;
+    });
+  }
+
+// var btnScreenshare=document.querySelector('#btn-share-screen');
+// // const startButton = document.getElementById('startButton');
+// btnScreenshare.addEventListener('click', () => {
+//   navigator.mediaDevices.getDisplayMedia({video: true})
+//       .then(stream=>{handleSuccess(stream)});
+// });
+
+
+// function shareScreen() {
+//     navigator.mediaDevices.getDisplayMedia({ cursor: true }).then(stream => {
+//         const screenTrack = stream.getTracks()[0];
+//         return screenTrack
+        // senders.current.find(sender => sender.track.kind === 'video').replaceTrack(screenTrack);
+        // screenTrack.onended = function() {
+        //     senders.current.find(sender => sender.track.kind === "video").replaceTrack(userStream.current.getTracks()[1]);
+//         // }
+//     })
+// }
+
+// document.querySelector('#btn-share-screen').addEventListener('click',(e)=>{
+//     navigator.mediaDevices.getDisplayMedia({
+//         video: {
+//             cursor:"always"
+//         },
+//         audio:{
+//             echoCancellation:true,
+//             noiseSuppression:true
+//         }
+//             })
+//              .then(stream=>{
+//                 let videoTrack=stream.getVideoTracks()[0];
+//                 let sender=peer.getSenders().find(function(s){
+//                     return s.track.kind === videoTrack.kind
+//                 })
+//                 sender.replaceTrack(videoTrack)
+//              })
+
+//              .catch(err=>{console.log('error',err)})
+
+// })
